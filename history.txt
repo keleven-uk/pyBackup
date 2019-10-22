@@ -1,0 +1,35 @@
+commit dc2ee36b53407cd84ce764207dd062a4dc1ca98f
+Author: keleven-uk <github@keleven.co.uk>
+Date:   Sun Oct 20 22:54:21 2019 +0100
+
+    Added file _version.py - holds the current version of the project.
+    
+    Update the licence ot V3 of the GNU General Public License.
+    
+    Added files that have changed size and date to file that are copied
+    across.
+    Added a reverse scaan, that will delete file in the destination that no
+    longer exist in the source directory.
+    
+    Added command argument to print the license and version.
+    
+    Change command argument for source and destination to be optional, but
+    checks that they are provided if needed.
+
+ _version.py |   1 +
+ pyBackup.py | 192 +++++++++++++++++++++++++++++++++++++++++++++++-------------
+ 2 files changed, 153 insertions(+), 40 deletions(-)
+
+commit 429679b4c764fdf6cd5c5c741de14cd2e4f657d3
+Author: keleven-uk <github@keleven.co.uk>
+Date:   Thu Oct 17 22:17:05 2019 +0100
+
+    Basic structure finished.
+    Will walk the source directory and pass the filename on for further
+    processing.
+    Will copy files across if does not exist in destication directory.
+
+ .gitignore  | 129 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ build.py    | 122 ++++++++++++++++++++++++++++++++++++++++++++++++++++
+ pyBackup.py | 141 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 392 insertions(+)
