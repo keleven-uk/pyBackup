@@ -1,35 +1,44 @@
-commit dc2ee36b53407cd84ce764207dd062a4dc1ca98f
-Author: keleven-uk <github@keleven.co.uk>
-Date:   Sun Oct 20 22:54:21 2019 +0100
+    Version = 1.1.0.
+    
+    Used pathlib for all paths.
+    Changed the method to collect all the filename form os.wal to using glob().
+    Changed the method of constructing the destination pathname, now uses path.parts.
+        Only partly tested on absolute path names only. Needs more testing.
+        Changed all print statements to use f string - print(f"{filename})"
+    The -v argument now uses the value in __version__ in _version.py.
+    Moved the argument validation into parseArgs procedure.
+        
+    
+    Version = 1.0.4.
+
+    Added LICENSE.txt, history.txt and README.md
+
+
+    Version = 1.0.3.
+    
+    Added the ability to remove empty directories.
+    Added the ability to print bytes in a human readable format i.e. in KB or MB etc.
+    
+
+    Version = 1.0.2
 
     Added file _version.py - holds the current version of the project.
     
-    Update the licence ot V3 of the GNU General Public License.
+    Update the licence to V3 of the GNU General Public License.
     
-    Added files that have changed size and date to file that are copied
-    across.
-    Added a reverse scaan, that will delete file in the destination that no
+    Added files that have changed size and date to file that are copied across.
+    Added a reverse scan, that will delete file in the destination that no
     longer exist in the source directory.
     
     Added command argument to print the license and version.
     
-    Change command argument for source and destination to be optional, but
+    Change command arguments for source and destination to be optional, but
     checks that they are provided if needed.
 
- _version.py |   1 +
- pyBackup.py | 192 +++++++++++++++++++++++++++++++++++++++++++++++-------------
- 2 files changed, 153 insertions(+), 40 deletions(-)
 
-commit 429679b4c764fdf6cd5c5c741de14cd2e4f657d3
-Author: keleven-uk <github@keleven.co.uk>
-Date:   Thu Oct 17 22:17:05 2019 +0100
+    Version = 1.0.1
 
     Basic structure finished.
-    Will walk the source directory and pass the filename on for further
-    processing.
-    Will copy files across if does not exist in destication directory.
+    Will walk the source directory and pass the filename on for further processing.
+    Will copy files across if does not exist in destination directory.
 
- .gitignore  | 129 ++++++++++++++++++++++++++++++++++++++++++++++++++++++
- build.py    | 122 ++++++++++++++++++++++++++++++++++++++++++++++++++++
- pyBackup.py | 141 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 392 insertions(+)
