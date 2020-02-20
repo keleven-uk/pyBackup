@@ -1,3 +1,16 @@
+    Version = 1.1.1.
+    
+    Changed script descrition.
+    Added a check for is file is copyFiles to stop trying to copy directory.
+    Moved the delete file stuff into comapreReverseFiles instead of it's own sub.
+    Amended removeEmptyDir
+        Only len(os.listdir(f)) gave a true zero value for empty directories.
+        Also, tried f.stat().st_size, os.stat(f)[6] & os.path.getsize(f)
+    Tried to tidy up the results format.
+    Changed to code in getHimanReadable to a simpler one - found on the web.
+    Added colour - Error message nor print in red.
+    
+    
     Version = 1.1.0.
     
     Used pathlib for all paths.

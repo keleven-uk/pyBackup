@@ -2,10 +2,12 @@ About pyBackup
 
 A attempt to write a backup script in Python.
 
-Written in Python 3.7.
+Written in Python 3.8.
 
 
-The backup is a mirrored backup, that is after the process destDir will be a perfect mirror of sourceDir.
+Two Directories are compared and the destination directory is made a mirror of the source directory.
+That is, all files missing the the destination are copied across and all file that only exist in the
+destination are deleted.  Also, all empty directories in the destination are removed [but not in source].
 
 usage: pyBackup.py [-h] [-s SOURCEDIR] [-d DESTDIR] [-t] [-l] [-v]
 

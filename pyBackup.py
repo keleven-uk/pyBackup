@@ -2,7 +2,9 @@
 #                                                                                                             #
 #  Perform a backup of sourceDir to destDir                                                                   #
 #                                                                                                             #
-#  The backup is a mirrored backup, that is after the process destDir will be a perfect mirror of sourceDir.  #
+#  Two Directories are compared and the destination directory is made a mirror of the source directory.       #
+#  That is, all files missing the the destination are copied across and all file that only exist in the       #
+#  destination are deleted.  Also, all empty directories in the destination are removed [but not in source].  #
 #                                                                                                             #
 #        usage: pyBackup.py [-h] [-s SOURCEDIR] [-d DESTDIR] [-t] [-l] [-v]                                   #
 #                                                                                                             #
@@ -37,10 +39,11 @@ import textwrap
 import datetime
 import argparse
 import colorama
+import __main__ as main
 from _version import __version__
 
 
-############################################################################################## copyFiles ######
+################################################################################################## Results ######
 
 class Results():
     """  A simple class that holds the total number and size of files copied.
@@ -66,7 +69,9 @@ def copyFiles(sourceFileName, destFileName, mode, test):
          Will only copy is test is set to false.
     """
     dir = destFileName.parent
-    
+    CopyResults.copyNumber += 1
+    CopyResults.copySize   += os.path.getsize(sourceFileName)
+        
     if not os.path.exists(dir):
         try:
             if not test: os.makedirs(dir)        #   use instead of mkdir, will recursively create directory path.
@@ -75,13 +80,14 @@ def copyFiles(sourceFileName, destFileName, mode, test):
             sys.stderr.write(f"{dir} : does not exist, or could not be created {error}")
             return
     
-    try:
-        print(f"Copying : {mode} :: {sourceFileName.name}")
-        if not test: shutil.copy(sourceFileName, destFileName)
-    except (IOError, os.error) as error:
-        print(f"ERROR :: { error} : could not copy {sourceFileName.name}")
+    if sourceFileName.is_file():
+        try:
+            print(f"Copying : {mode} :: {sourceFileName.name}")
+            if not test: shutil.copy(sourceFileName, destFileName)
+        except (IOError, os.error) as error:
+            print(f"ERROR :: { error} : could not copy {sourceFileName.name}")
 
-#################################################################################### comparForwardFiles ######
+#################################################################################### compareForwardFiles ######
 
 def compareForwardFiles(sourceFileName, destFileName, test):
     """  Called when forward checking the original source against the original destination.
@@ -92,17 +98,16 @@ def compareForwardFiles(sourceFileName, destFileName, test):
          or that the file size is different in source and destination,
          or that the file date is later in source then destination.
     """
-    
     if not destFileName.exists():
         mode = "file does not exist in destination"
+        copyFiles(sourceFileName, destFileName, mode, test)
     elif os.path.getsize(sourceFileName) != os.path.getsize(destFileName):
         mode = "file size has changed."
+        copyFiles(sourceFileName, destFileName, mode, test)
     elif (os.path.getmtime(sourceFileName) > os.path.getmtime(destFileName)):
         mode = "file date has changed."
-
-    copyFiles(sourceFileName, destFileName, mode, test)
-    CopyResults.copyNumber += 1
-    CopyResults.copySize   += os.path.getsize(sourceFileName)
+        copyFiles(sourceFileName, destFileName, mode, test)
+        
 ################################################################################## compareReverseFiles ######
 
 def compareReverseFiles(sourceFileName, destFileName, test):
@@ -119,30 +124,34 @@ def compareReverseFiles(sourceFileName, destFileName, test):
         CopyResults.deleteSize   += os.path.getsize(sourceFileName)
 
         try:
-            print(f"Deleting {mode} :: {sourceFileName.name}")
-            if not test: os.remove(sourceFileName)
+            if sourceFileName.is_file():
+                print(f"Deleting {mode} :: {sourceFileName.name}")
+                if not test: os.remove(sourceFileName)
         except (IOError, os.error) as error:
             print(f"ERROR :: {error} : could not delete {destFileName.name}")
 
-############################################################################################## removeDir ######
-def removeEmptyDir(path):
+######################################################################################### removeEmptyDir ######
+def removeEmptyDir(destDir):
     """  removes all empty directory's in path.
-    """
-
-    subfolders = [ f.path for f in os.scandir(destDir) if f.is_dir() ]  # A quick list of all subfolders.
     
-    for folder in subfolders: 
-        if os.path.getsize(folder) == 0:
-            
-            print(f"Removing empty directory {path}")
-            try:
-                os.rmdir(path)
-                CopyResults.emptyDirs += 1
-            except (IOError, os.error) as error:
-                print(f"ERROR :: {error} : could not delete {path}")
+         Will removed a directory tree, but needs several runs to achieve this.
+         Each run will remove the lowest level of the directory tree.
+         
+         Only len(os.listdir(f)) gave a true zero value for empty directories.
+         Also, tried f.stat().st_size, os.stat(f)[6] & os.path.getsize(f)
+    """
+    for f in destDir.glob("**/*"):
+        if f.is_dir():
+            if len(os.listdir(f)) == 0:
+                print(f"Removing empty directory {f}")
+                try:
+                    if not test: shutil.rmtree(f, ignore_errors=True, onerror=None)
+                    CopyResults.emptyDirs += 1
+                except (IOError, os.error) as error:
+                    print(f"ERROR :: {error} : could not delete {f}")
 
-################################################################################################# backup ######
-
+ ################################################################################################# backup ######
+ 
 def backup(sourceDir, destDir, direction, test):
     """  Performs a file walk of the source directory, then passes each filename for further processing.
     
@@ -174,46 +183,44 @@ def backup(sourceDir, destDir, direction, test):
         else:
             compareReverseFiles(sourceFileName, destFileName, test)   #   original.destination -> original.source
 
-    # A quick check of destDir for empty directories.
-    removeEmptyDir(destDir)
-
 ########################################################################################### printResults ######
 
 def printResults():
     """  Print out the results of the backup.
     """
     print()
-    print(f"Copied {CopyResults.copyNumber} file[s] not in destination [Copied], {GetHumanReadable(CopyResults.copySize)}")
-    print(f"Copied {CopyResults.sizeNumber} file[s] that size has changed      , {GetHumanReadable(CopyResults.sizeSize)}")
-    print(f"Copied {CopyResults.dateNumber} file[s] that date has changed      , {GetHumanReadable(CopyResults.dateSize)}")
-    print(f"Copied {CopyResults.deleteNumber} file[s] not in source [deleted]  , {GetHumanReadable(CopyResults.deleteSize)}")
-    print(f"Empty directories deleted                                          , {CopyResults.emptyDirs}")
+    print(f"Copied {CopyResults.copyNumber:6} file[s] not in destination [Copied], {getHumanReadable(CopyResults.copySize)}")
+    print(f"Copied {CopyResults.sizeNumber:6} file[s] that size has changed      , {getHumanReadable(CopyResults.sizeSize)}")
+    print(f"Copied {CopyResults.dateNumber:6} file[s] that date has changed      , {getHumanReadable(CopyResults.dateSize)}")
+    print(f"Copied {CopyResults.deleteNumber:6}   file[s] not in source [deleted]  , {getHumanReadable(CopyResults.deleteSize)}")
+    print(f"Empty directories deleted                        , {CopyResults.emptyDirs}")
 
 ####################################################################################### GetHumanReadable ######
-def GetHumanReadable(size,precision=2):
+def getHumanReadable(bytes, suffix="B"):
     """  Returns the number of bytes in a more readable form.
          Nicked from the internet.
+         
+         1253656 => "1.20MB"
+         1253656678 => "1.17GB"
     """
-    suffixes=['B','KB','MB','GB','TB']
-    suffixIndex = 0
-    while size > 1024:
-        suffixIndex += 1        #  increment the index of the suffix
-        size = size/1024.0      #  apply the division
-
-    return "%.*f %s"%(precision,size,suffixes[suffixIndex])
+    factor = 1024
+    for unit in ["", "K", "M", "G", "T", "P"]:
+        if bytes < factor:
+            return f"{bytes:.2f}{unit}{suffix}"
+        bytes /= factor
 
 ########################################################################################### printSortLicense ######
 def printShortLicense():
-    print("""
-PyBackup {}   Copyright (C) 2019 - 2020  Kevin Scott
+    print(f"""
+{os.path.basename(main.__file__)} V{__version__}   Copyright (C) 2019 - 2020  Kevin Scott
 This program comes with ABSOLUTELY NO WARRANTY; for details type `pyBackup -l'.
 This is free software, and you are welcome to redistribute it under certain conditions.
-    """.format(__version__), flush=True)
+    """, flush=True)
 
 ########################################################################################### printLongLicense ######
 def printLongLicense():
-    print("""
-    Copyright (C) 2019 - 2020  Kevin Scott
+    print(f"""
+    {os.path.basename(main.__file__)} V{__version__}   Copyright (C) 2019 - 2020  Kevin Scott
 
     This program is free software: you can redistribute it and/or modify it 
     under the terms of the GNU General Public License as published by   
@@ -246,8 +253,9 @@ def parseArgs():
         description=textwrap.dedent("""\
         A Python backup script.
         -----------------------
-        The backup is a mirrored backup, that is after
-        the process destDir will be a perfect mirror of sourceDir."""),
+        Two Directories are compared and the destination directory is made a mirror of the source directory.
+        That is, all files missing the the destination are copied across and all file that only exist in the
+        destination are deleted.  Also, all empty directories in the destination are removed [but not in source]."""),
         epilog = f" Kevin Scott (C) 2019 - 2020 :: %(prog)s V{__version__}")
 
     #  Add a Positional Argument.
@@ -311,6 +319,9 @@ if __name__ == "__main__":
         print(f"Reverse Scan :: {destDir} -> {sourceDir} ", flush=True)
     backup(destDir, sourceDir, "reverse", test)
     
+    # A quick check of destDir for empty directories.
+    removeEmptyDir(destDir)
+    
     if CopyResults.copyNumber or CopyResults.deleteNumber:
         printResults()
 
@@ -318,5 +329,5 @@ if __name__ == "__main__":
 
     print()
     elapsed_time_secs = time.time() - start_time
-    print(f"Completed {datetime.timedelta(seconds = elapsed_time_secs)}")
+    print(f"{colorama.Fore.CYAN}Completed {datetime.timedelta(seconds = elapsed_time_secs)}  {colorama.Fore.RESET}")
     print()
