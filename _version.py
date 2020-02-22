@@ -1,1 +1,2 @@
-__version__ = "1.1.1"
+myVERSION = "1.1.2"
+myNAME    = "PyBackup"

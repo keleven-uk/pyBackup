@@ -126,4 +126,7 @@ $RECYCLE.BIN/
 .*~
 *.*~
 
+# logging files
+*.log.*
+
 # End of https://www.gitignore.io/api/python,windows

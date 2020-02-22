@@ -1,6 +1,17 @@
+    Version = 1.1.2
+
+    Added myLogger.pt, a wrapper of the python logger.  This is a generic module.
+    Added logging statement through out the program.
+    Found that the removeEmptyDir only delete the child directory, needs several
+    runs on the program to completely delete a directory tree.
+    Found the program does not copy directories with upper case names - needs work.
+    Added timing for the tree phases of the program - forward, reverse and deleting empty destination directories.
+    Added program name to _version.py.  Should this be just version.py.
+
+
     Version = 1.1.1.
-    
-    Changed script descrition.
+
+    Changed script description.
     Added a check for is file is copyFiles to stop trying to copy directory.
     Moved the delete file stuff into comapreReverseFiles instead of it's own sub.
     Amended removeEmptyDir
@@ -8,11 +19,11 @@
         Also, tried f.stat().st_size, os.stat(f)[6] & os.path.getsize(f)
     Tried to tidy up the results format.
     Changed to code in getHimanReadable to a simpler one - found on the web.
-    Added colour - Error message nor print in red.
-    
-    
+    Added colour - Error message now print in red.
+
+
     Version = 1.1.0.
-    
+
     Used pathlib for all paths.
     Changed the method to collect all the filename form os.wal to using glob().
     Changed the method of constructing the destination pathname, now uses path.parts.
@@ -20,31 +31,31 @@
         Changed all print statements to use f string - print(f"{filename})"
     The -v argument now uses the value in __version__ in _version.py.
     Moved the argument validation into parseArgs procedure.
-        
-    
+
+
     Version = 1.0.4.
 
     Added LICENSE.txt, history.txt and README.md
 
 
     Version = 1.0.3.
-    
+
     Added the ability to remove empty directories.
     Added the ability to print bytes in a human readable format i.e. in KB or MB etc.
-    
+
 
     Version = 1.0.2
 
     Added file _version.py - holds the current version of the project.
-    
+
     Update the licence to V3 of the GNU General Public License.
-    
+
     Added files that have changed size and date to file that are copied across.
     Added a reverse scan, that will delete file in the destination that no
     longer exist in the source directory.
-    
+
     Added command argument to print the license and version.
-    
+
     Change command arguments for source and destination to be optional, but
     checks that they are provided if needed.
 
@@ -54,4 +65,3 @@
     Basic structure finished.
     Will walk the source directory and pass the filename on for further processing.
     Will copy files across if does not exist in destination directory.
-
