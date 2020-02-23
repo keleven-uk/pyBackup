@@ -35,7 +35,7 @@ def get_console_handler():
     return console_handler
 
 def get_file_handler():
-    file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight")
+    file_handler = TimedRotatingFileHandler(LOG_FILE, when="midnight", backupCount=7)  # Only keep 7 previous logs.
     file_handler.setFormatter(FORMATTER)
     return file_handler
 

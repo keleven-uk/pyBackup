@@ -177,8 +177,8 @@ def backup(sourceDir, destDir, direction, test):
         p  = d:\\four\\two\\three.txt"
     """
 
-    for sourceFileName in sourceDir.glob("**/*.*"):     # Recursively find all files in sourceDir.
-        print(sourceFileName)
+    #for sourceFileName in sourceDir.glob("**/*.*"):    # Seems to miss files with no extension.
+    for sourceFileName in sourceDir.glob("**/*"):       # Recursively find all files in sourceDir.
         fn = list(sourceFileName.parts)                 # A list of all the component parts on the source filemyNAME.
         dn = list(destDir.parts)                        # A list of all the component parts of the destination path.
         d = len(dn)                                     # Length of destination path
@@ -324,6 +324,13 @@ if __name__ == "__main__":
     startTime = time.time()
 
     sourceDir, destDir, test = parseArgs()
+    print("===================================")
+
+    if sourceDir.parts == ():               # if sourceDir is "." then backup Current Working Directory
+        destDir = pathlib.Path.cwd()
+
+    if destDir.parts == ():                 # if destDir is "." then dump to Current Working Directory
+        destDir = pathlib.Path.cwd()
 
     if test:
         print(f"Backing up {sourceDir} -> {destDir} in test mode", flush=True)

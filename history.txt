@@ -1,6 +1,14 @@
+    Version = 1.1.3
+
+    Program does copy directories with Capital letters, but only if they are not empty.
+    So, forward and reverse scans ignore empty directories - probably what we want.
+    There was a problem copying files with no extension - changed to glob to ("**/*") from ("**/*.*")
+    Added substation of the Current Working Directory for "." - needs testing.
+
+
     Version = 1.1.2
 
-    Added myLogger.pt, a wrapper of the python logger.  This is a generic module.
+    Added myLogger.py, a wrapper of the python logger.  This is a generic module.
     Added logging statement through out the program.
     Found that the removeEmptyDir only delete the child directory, needs several
     runs on the program to completely delete a directory tree.
