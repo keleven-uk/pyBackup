@@ -1,0 +1,13 @@
+#   Config files for PyBackup.py
+#
+#   Use single quotes :-(
+#
+#   March 2020   Kevin Scott
+
+
+title = 'PyBackup config file'
+
+# version information
+[INFO]
+myVERSION = '1.2.0beta'
+myNAME    = 'PyBackup'

@@ -1,3 +1,14 @@
+    Version = 1.2.0
+
+    Added three new files.
+      myLibrary.py - a wrapper around dictionary access, used to store song stuff.
+      myLicense.py - holds the print stuff for short license and long license.
+      myConfig.py  - a wrapper class to read a toml config file [replaces _version.py].
+    _version.py removed.
+    Amended delete file function to use recycle bin, can be overridden to permanently ddelete
+      files using command line argument.
+
+
     Version = 1.1.3
 
     Program does copy directories with Capital letters, but only if they are not empty.
