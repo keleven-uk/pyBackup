@@ -38,9 +38,10 @@
 ########################################################################################### printSortLicense ######
 def printShortLicense(Name, Version):
     print("")
-    print(f"{Name} V{Version}   Copyright (C) 2019 - 2020    Kevin Scott")
-    print(f"This program comes with ABSOLUTELY NO WARRANTY; for details type `{Name} -l'.")
+    print(f"\n{Name} V{Version}   Copyright (C) 2019 - 2020    Kevin Scott")
+    print(f"\nThis program comes with ABSOLUTELY NO WARRANTY; for details type `{Name} -l'.")
     print("This is free software, and you are welcome to redistribute it under certain conditions.")
+    print(f"For usage : {Name}.py - h.")
 
 ########################################################################################### printLongLicense ######
 def printLongLicense(Name, Version):

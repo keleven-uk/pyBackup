@@ -9,5 +9,6 @@ title = 'PyBackup config file'
 
 # version information
 [INFO]
-myVERSION = '1.2.0beta'
+myVERSION = '2020.09'
 myNAME    = 'PyBackup'
+

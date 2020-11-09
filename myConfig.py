@@ -47,3 +47,4 @@ class Config():
         """
         return self.config['INFO']['myVERSION']
 
+

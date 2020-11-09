@@ -38,10 +38,9 @@ import textwrap
 import datetime
 import argparse
 import colorama
-import win32con     # needed for winshell
-import winshell
 import myConfig
 import myLogger
+from send2trash import send2trash
 from myLicense import printLongLicense, printShortLicense
 
 
@@ -63,6 +62,18 @@ class Results():
         self.deleteNumber = 0
         self.emptyDirs    = 0
 
+########################################################################################## updateResults ######
+def updateResults(mode, sourceFileName):
+
+    if mode == "file does not exist in destination.":
+        CopyResults.copyNumber += 1
+        CopyResults.copySize   += os.path.getsize(sourceFileName)
+    elif mode == "file size has changed.":
+        CopyResults.sizeNumber += 1
+        CopyResults.sizeSize   += os.path.getsize(sourceFileName)
+    elif mode == "file date has changed.":
+        CopyResults.dateSize += 1
+        CopyResults.dateSize   += os.path.getsize(sourceFileName)
 ############################################################################################## copyFiles ######
 
 def copyFiles(sourceFileName, destFileName, mode, test):
@@ -88,8 +99,7 @@ def copyFiles(sourceFileName, destFileName, mode, test):
             # Use copy2 instead of copy, copies the file metadata with the file.
             if not test:
                 shutil.copy2(sourceFileName, destFileName)
-                CopyResults.copyNumber += 1
-                CopyResults.copySize   += os.path.getsize(sourceFileName)
+                updateResults(mode, sourceFileName)
         except (IOError, os.error, shutil.Error) as error:
             logger.error(f"ERROR :: { error} : could not copy {sourceFileName.name}", exc_info=True)
             print(f"ERROR :: { error} : could not copy {sourceFileName.name}")
@@ -106,7 +116,7 @@ def compareForwardFiles(sourceFileName, destFileName, test):
          or that the file date is later in source then destination.
     """
     if not destFileName.exists():
-        mode = "file does not exist in destination"
+        mode = "file does not exist in destination."
         copyFiles(sourceFileName, destFileName, mode, test)
     elif os.path.getsize(sourceFileName) != os.path.getsize(destFileName):
         mode = "file size has changed."
@@ -115,8 +125,6 @@ def compareForwardFiles(sourceFileName, destFileName, test):
         mode = "file date has changed."
         copyFiles(sourceFileName, destFileName, mode, test)
 
-    if not destFileName.exists():
-        logger.debug(f"{sourceFileName} has no mode set")
 ################################################################################## compareReverseFiles ######
 
 def compareReverseFiles(sourceFileName, destFileName, test, zap):
@@ -133,12 +141,13 @@ def compareReverseFiles(sourceFileName, destFileName, test, zap):
             if sourceFileName.is_file():
                 print(f"Deleting : file does not exist in Source :: {sourceFileName.name}")
                 if not test:                                        # Only remove if not running in test mode.
+                    CopyResults.deleteNumber += 1
+                    CopyResults.deleteSize   += os.path.getsize(sourceFileName)
                     if zap:
                         os.remove(sourceFileName)                   # If zap, permanently remove files
                     else:
-                        winshell.delete_file(str(sourceFileName))   # Otherwise move to recycle bin.
-                    CopyResults.deleteNumber += 1
-                    CopyResults.deleteSize   += os.path.getsize(sourceFileName)
+                        print(f"{sourceFileName}")
+                        send2trash(str(sourceFileName))             # Otherwise move to recycle bin.
         except (IOError, os.error) as error:
             logger.error(f"ERROR :: {error} : could not delete {destFileName.name}", exc_info=True)
             print(f"ERROR :: {error} : could not delete {destFileName.name}")
@@ -166,7 +175,7 @@ def removeEmptyDir(destDir, zap):
                         if zap:
                             shutil.rmtree(f, ignore_errors=True, onerror=None)  # If zap, permanently remove files
                         else:
-                            winshell.delete_file(str(f))                  # Otherwise move to recycle bin.
+                            send2trash(str(f))                                  # Otherwise move to recycle bin.
 
                     CopyResults.emptyDirs += 1
                 except (IOError, os.error) as error:
@@ -239,7 +248,7 @@ def parseArgs():
 
          Checks the arguments and will exit if not valid.
 
-         Exit code 0 - program has exited normally, after print licence or help.
+         Exit code 0 - program has exited normally, after print licence, version or help.
          Exit Code 1 - No source directory supplied.
          Exit code 2 - Source directory does not exist.
          Exit code 3 - No destination directory supplied.
@@ -254,7 +263,7 @@ def parseArgs():
         Two Directories are compared and the destination directory is made a mirror of the source directory.
         That is, all files missing the the destination are copied across and all file that only exist in the
         destination are deleted.  Also, all empty directories in the destination are removed [but not in source]."""),
-        epilog = f" Kevin Scott (C) 2019 - 2020 :: myConfig.NAME(), myConfig.VERSION()")
+        epilog = f" Kevin Scott (C) 2019 - 2020 :: {myConfig.NAME()}, {myConfig.VERSION()}")
 
     #  Add a Positional Argument.
     #  a optional argument would be --source or -s
@@ -262,10 +271,14 @@ def parseArgs():
     parser.add_argument("-d", "--destDir",   type=pathlib.Path, action="store", default=False, help="name of the Destination directory.")
     parser.add_argument("-z", "--zap",       action="store_true", help="zap files otherwise move files to Recycle Bin.")
     parser.add_argument("-t", "--test",      action="store_true", help="run a test backup, nothing is changed only reported on.")
-    parser.add_argument("-l", "--license",   action="store_true" , help="Print the Software License.")
-    parser.add_argument("-v", "--version",   action="version"    , version=f"{myConfig.NAME()} V{myConfig.VERSION()}")
+    parser.add_argument("-l", "--license",   action="store_true", help="Print the Software License.")
+    parser.add_argument("-v", "--version",   action="store_true", help="print the version of the application.")
 
     args = parser.parse_args()
+
+    if args.version:
+        printShortLicense(myConfig.NAME(), myConfig.VERSION())
+        exit(0)
 
     if args.license:
         printLongLicense(myConfig.NAME(), myConfig.VERSION())
@@ -311,13 +324,12 @@ CopyResults = Results()     # Creates the results class.
 
 if __name__ == "__main__":
 
-    myConfig = myConfig.Config()
-    logger   = myLogger.get_logger(myConfig.NAME() + ".log")   # Create the logger.
-
-    logger.info("-------------------------------------------------------------")
-    logger.info(f"Start of myConfig.NAME(), myConfig.VERSION()")
-
     startTime = time.time()
+    myConfig  = myConfig.Config()
+    logger    = myLogger.get_logger(myConfig.NAME() + ".log")   # Create the logger.
+
+    logger.info("-"*100)
+    logger.info(f"Start of {myConfig.NAME()}, {myConfig.VERSION()}")
 
     sourceDir, destDir, test, zap = parseArgs()
 
@@ -334,17 +346,22 @@ if __name__ == "__main__":
 
     if test:
         print(f"Forward Scan {sourceDir} -> {destDir} in test mode [no files are copied]", flush=True)
+        logger.info(f"Forward Scan {sourceDir} -> {destDir} in test mode [no files are copied]")
     else:
         print(f"Forward Scan {sourceDir} -> {destDir} ", flush=True)
+        logger.info(f"Forward Scan {sourceDir} -> {destDir} ")
 
     backup(sourceDir, destDir, "forward", test, zap)
     forwardTime = time.time()
-    print("-----------------------------------------------------------------------")
+
+    print("-"*100)
+
     reverseStartTime = time.time()
     if test:
         print(f"Reverse Scan :: {destDir} -> {sourceDir} in test mode [no files are copied]", flush=True)
     else:
         print(f"Reverse Scan :: {destDir} -> {sourceDir} ", flush=True)
+
     backup(destDir, sourceDir, "reverse", test, zap)
     reverseTime = time.time()
 
@@ -353,7 +370,7 @@ if __name__ == "__main__":
     removeEmptyDir(destDir, zap)
     emptyDirTime = time.time()
 
-    if CopyResults.copyNumber or CopyResults.deleteNumber or CopyResults.emptyDirs:
+    if CopyResults.copyNumber or CopyResults.sizeNumber or CopyResults.emptyDirs or CopyResults.deleteNumber:
         printResults()
 
     print()
@@ -367,4 +384,4 @@ if __name__ == "__main__":
     print(f"{colorama.Fore.CYAN}Empty Dirs :: {datetime.timedelta(seconds = emptyDirTimeSecs)}  {colorama.Fore.RESET}")
     print()
 
-    logger.info(f"End of myConfig.NAME(), myConfig.VERSION()")
+    logger.info(f"End of {myConfig.NAME()}, {myConfig.VERSION()}")
