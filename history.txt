@@ -1,4 +1,10 @@
-Version = 2020.09
+Version = 2020.10
+
+    In pyBackup.py
+        Changed the way the destination path is formed from the source path and the target path.
+        Hopefully this is simpler and correct a few bugs.
+
+Version = 2020.09.155009c
 
     Changed format of version number - now is year.build number.7 digit git commit ID.
     Added requirements.txt.

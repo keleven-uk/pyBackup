@@ -9,6 +9,8 @@ Two Directories are compared and the destination directory is made a mirror of t
 That is, all files missing the the destination are copied across and all file that only exist in the
 destination are deleted.  Also, all empty directories in the destination are removed [but not in source].
 
+To install dependencies pip -r requirements.txt
+
 usage: pyBackup.py [-h] [-s SOURCEDIR] [-d DESTDIR] [-t] [-l] [-v]
 
 A Python backup script.
@@ -35,10 +37,7 @@ optional arguments:
   -v, --version         show program's version number and exit
 
 
- Kevin Scott (C) 2019 - 2020 :: PyBackup V1.2.0
+ Kevin Scott (C) 2019 - 2020 :: PyBackup V2020.10
 
-
- Known Issues
-     Seems to ignore empty directories in source and destination - maybe this is what we want?
 
   For changes see history.txt

@@ -44,10 +44,7 @@ from send2trash import send2trash
 from myLicense import printLongLicense, printShortLicense
 
 
-
-################################################################################################## Results ######
-
-class Results():
+class Results:
     """  A simple class that holds the total number and size of files copied.
          Save on global variables.
     """
@@ -62,7 +59,7 @@ class Results():
         self.deleteNumber = 0
         self.emptyDirs    = 0
 
-########################################################################################## updateResults ######
+
 def updateResults(mode, sourceFileName):
 
     if mode == "file does not exist in destination.":
@@ -74,7 +71,7 @@ def updateResults(mode, sourceFileName):
     elif mode == "file date has changed.":
         CopyResults.dateSize += 1
         CopyResults.dateSize   += os.path.getsize(sourceFileName)
-############################################################################################## copyFiles ######
+
 
 def copyFiles(sourceFileName, destFileName, mode, test):
     """  If file does not exist in the destination directory, then copy the file.
@@ -104,7 +101,6 @@ def copyFiles(sourceFileName, destFileName, mode, test):
             logger.error(f"ERROR :: { error} : could not copy {sourceFileName.name}", exc_info=True)
             print(f"ERROR :: { error} : could not copy {sourceFileName.name}")
 
-#################################################################################### compareForwardFiles ######
 
 def compareForwardFiles(sourceFileName, destFileName, test):
     """  Called when forward checking the original source against the original destination.
@@ -125,7 +121,6 @@ def compareForwardFiles(sourceFileName, destFileName, test):
         mode = "file date has changed."
         copyFiles(sourceFileName, destFileName, mode, test)
 
-################################################################################## compareReverseFiles ######
 
 def compareReverseFiles(sourceFileName, destFileName, test, zap):
     """  Called when reverse checking the original destination against the original source.
@@ -152,7 +147,7 @@ def compareReverseFiles(sourceFileName, destFileName, test, zap):
             logger.error(f"ERROR :: {error} : could not delete {destFileName.name}", exc_info=True)
             print(f"ERROR :: {error} : could not delete {destFileName.name}")
 
-######################################################################################### removeEmptyDir ######
+
 def removeEmptyDir(destDir, zap):
     """  removes all empty directory's in path.
 
@@ -182,41 +177,27 @@ def removeEmptyDir(destDir, zap):
                     logger.error(f"ERROR :: {error} : could not delete {f}", exc_info=True)
                     print(f"ERROR :: {error} : could not delete {f}")
 
-################################################################################################# backup ######
 
 def backup(sourceDir, destDir, direction, test, zap):
     """  Performs a file walk of the source directory, then passes each filemyNAME for further processing.
-
-    i.e. backing up the directory d:\one to d:\four.  [probably an easier way]
-        sourceDir = d:\one\two\three.txt
-        distDir   = d:\four
-        fn        = ["d:\\", "one", "two", "three.txt"]
-        dn        = ["d:\\", "four"]
-        d         = 2
-
-        p1 = "D:\\four"
-        p2 = "two\\three.txt"
-        p  = d:\\four\\two\\three.txt"
     """
 
-    # for sourceFileName in sourceDir.glob("**/*.*"):    # Seems to miss files with no extension.
+    # for sourceFileName in sourceDir.glob("**/*.*"):   # Seems to miss files with no extension.
     for sourceFileName in sourceDir.glob("**/*"):       # Recursively find all files in sourceDir.
-        fn = list(sourceFileName.parts)                 # A list of all the component parts on the source filemyNAME.
-        dn = list(destDir.parts)                        # A list of all the component parts of the destination path.
-        d = len(dn)                                     # Length of destination path
+        # paths
+        fn = sourceFileName.parts                       # A list of all the component parts on the sourceFilemyNAME.
 
-        p1 = "\\".join(dn)                              # A string of the destination path
-        p2 = "\\".join(fn[d:])                          # A string of the source path, that needs to be added to the destination.
-        p  = p1 + "\\" + p2                             # A complete string of the destination path
-
-        destFileName = pathlib.Path(p)                  # Change the string path to a pathlib.Path
+        if ":" in fn[0]:                                # If source starts with a drive [i.e. d:\], then remove.
+            p = "\\".join(fn[1:])
+        else:                                           # No drive isa source, add full path.
+            p = "\\".join(fn)
+        destFileName  = destDir.joinpath(p)             # A complete string of the destination path.
 
         if direction == "forward":
             compareForwardFiles(sourceFileName, destFileName, test)         # original.source -> original.destination
         else:
             compareReverseFiles(sourceFileName, destFileName, test, zap)    # original.destination -> original.source
 
-########################################################################################### printResults ######
 
 def printResults():
     """  Print out the results of the backup.
@@ -225,10 +206,10 @@ def printResults():
     print(f"Copied {CopyResults.copyNumber:6} file[s] not in destination [Copied], {getHumanReadable(CopyResults.copySize)}")
     print(f"Copied {CopyResults.sizeNumber:6} file[s] that size has changed      , {getHumanReadable(CopyResults.sizeSize)}")
     print(f"Copied {CopyResults.dateNumber:6} file[s] that date has changed      , {getHumanReadable(CopyResults.dateSize)}")
-    print(f"Copied {CopyResults.deleteNumber:6}   file[s] not in source [deleted]  , {getHumanReadable(CopyResults.deleteSize)}")
+    print(f"Copied {CopyResults.deleteNumber:6} file[s] not in source [deleted]  , {getHumanReadable(CopyResults.deleteSize)}")
     print(f"Empty directories deleted                        , {CopyResults.emptyDirs}")
 
-####################################################################################### GetHumanReadable ######
+
 def getHumanReadable(bytes, suffix="B"):
     """  Returns the number of bytes in a more readable form.
          Nicked from the internet.
@@ -242,7 +223,7 @@ def getHumanReadable(bytes, suffix="B"):
             return f"{bytes:.2f}{unit}{suffix}"
         bytes /= factor
 
-############################################################################################## parseArgs ######
+
 def parseArgs():
     """  Process the command line arguments.
 
@@ -256,14 +237,15 @@ def parseArgs():
          Exit code 5 - Source directory not found.
     """
     parser = argparse.ArgumentParser(
-        formatter_class = argparse.RawTextHelpFormatter,
-        description=textwrap.dedent("""\
+        prog=myConfig.NAME(),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        description=textwrap.dedent('''\
         A Python backup script.
         -----------------------
         Two Directories are compared and the destination directory is made a mirror of the source directory.
         That is, all files missing the the destination are copied across and all file that only exist in the
-        destination are deleted.  Also, all empty directories in the destination are removed [but not in source]."""),
-        epilog = f" Kevin Scott (C) 2019 - 2020 :: {myConfig.NAME()}, {myConfig.VERSION()}")
+        destination are deleted.  Also, all empty directories in the destination are removed [but not in source].'''),
+        epilog=f' Kevin Scott (C) 2019 - 2020 :: {myConfig.NAME()}, {myConfig.VERSION()}')
 
     #  Add a Positional Argument.
     #  a optional argument would be --source or -s
@@ -318,7 +300,6 @@ def parseArgs():
 
     return (args.sourceDir, args.destDir, args.test, args.zap)
 
-############################################################################################### __main__ ######
 
 CopyResults = Results()     # Creates the results class.
 
